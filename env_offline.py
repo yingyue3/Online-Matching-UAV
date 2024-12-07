@@ -8,7 +8,7 @@ from ga import GA
 from aco import ACO
 from pso import PSO
 
-class Env():
+class Env_offline():
     def __init__(self, vehicle_num, target_num, map_size, visualized=True, time_cost=None, repeat_cost=None):
         self.vehicles_position = np.zeros(vehicle_num,dtype=np.int32)
         self.vehicles_speed = np.zeros(vehicle_num,dtype=np.int32)
@@ -48,6 +48,18 @@ class Env():
             for j in range(self.targets.shape[0]):
                 self.distant_mat[i,j] = np.linalg.norm(self.targets[i,:2]-self.targets[j,:2])
         self.targets_value = copy.deepcopy((self.targets[:,2]))
+    
+    def task_inheritation(self, targets, time_delay, vehicles_speed):
+        self.vehicles_speed = vehicles_speed
+        for i in range(self.targets.shape[0]-1):
+            self.targets[i+1] = targets[i]
+            self.targets[i+1,3] += time_delay[i]
+
+        for i in range(self.targets.shape[0]):
+            for j in range(self.targets.shape[0]):
+                self.distant_mat[i,j] = np.linalg.norm(self.targets[i,:2]-self.targets[j,:2])
+        self.targets_value = copy.deepcopy((self.targets[:,2]))
+        
         
     def step(self, action):
         count = 0
@@ -135,123 +147,25 @@ def evaluate(vehicle_num, target_num, map_size):
         size='medium'
     if vehicle_num==15:
         size='large'
-    re_ga=[[] for i in range(10)]
-    re_aco=[[] for i in range(10)]
-    re_pso=[[] for i in range(10)]
-    for i in range(10):
-        env = Env(vehicle_num,target_num,map_size,visualized=True)
-        for j in range(10):
-            p=Pool(3)
-            ga = GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim)
-            aco = ACO(vehicle_num,target_num,env.vehicles_speed,env.targets,env.time_lim)
-            pso = PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim)
-            ga_result=p.apply_async(ga.run)
-            aco_result=p.apply_async(aco.run)
-            pso_result=p.apply_async(pso.run)
-            p.close()
-            p.join()
-            ga_task_assignmet = ga_result.get()[0]
-            env.run(ga_task_assignmet,'GA',i+1,j+1)
-            re_ga[i].append((env.total_reward,ga_result.get()[1]))
-            env.reset()
-            aco_task_assignmet = aco_result.get()[0]
-            env.run(aco_task_assignmet,'ACO',i+1,j+1)
-            re_aco[i].append((env.total_reward,aco_result.get()[1]))
-            env.reset()
-            pso_task_assignmet = pso_result.get()[0]
-            env.run(pso_task_assignmet,'PSO',i+1,j+1)
-            re_pso[i].append((env.total_reward,pso_result.get()[1]))
-            env.reset()
-    x_index=np.arange(10)
-    ymax11=[]
-    ymax12=[]
-    ymax21=[]
-    ymax22=[]
-    ymax31=[]
-    ymax32=[]
-    ymean11=[]
-    ymean12=[]
-    ymean21=[]
-    ymean22=[]
-    ymean31=[]
-    ymean32=[]
-    for i in range(10):
-        tmp1=[re_ga[i][j][0] for j in range(10)]
-        tmp2=[re_ga[i][j][1] for j in range(10)]
-        ymax11.append(np.amax(tmp1))
-        ymax12.append(np.amax(tmp2))
-        ymean11.append(np.mean(tmp1))
-        ymean12.append(np.mean(tmp2))
-        tmp1=[re_aco[i][j][0] for j in range(10)]
-        tmp2=[re_aco[i][j][1] for j in range(10)]
-        ymax21.append(np.amax(tmp1))
-        ymax22.append(np.amax(tmp2))
-        ymean21.append(np.mean(tmp1))
-        ymean22.append(np.mean(tmp2))
-        tmp1=[re_pso[i][j][0] for j in range(10)]
-        tmp2=[re_pso[i][j][1] for j in range(10)]
-        ymax31.append(np.amax(tmp1))
-        ymax32.append(np.amax(tmp2))
-        ymean31.append(np.mean(tmp1))
-        ymean32.append(np.mean(tmp2))
-    rects1=plt.bar(x_index,ymax11,width=0.1,color='b',label='ga_max_reward')
-    rects2=plt.bar(x_index+0.1,ymax21,width=0.1,color='r',label='aco_max_reward')
-    rects3=plt.bar(x_index+0.2,ymax31,width=0.1,color='g',label='pso_max_reward')
-    plt.xticks(x_index+0.1,x_index)
-    plt.legend()
-    plt.title('max_reward_for_'+size+'_size')
-    plt.savefig('max_reward_'+size+'.png')
-    plt.cla()
+    env = Env_offline(vehicle_num,target_num,map_size,visualized=False)
+    ga = GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim)
+    ga_result = ga.run()
+    ga_task_assignmet = ga_result[0]
+    print("target:==============")
+    print(env.targets)
+    print("target value:===============")
+    print(env.targets_value)
+    env.run(ga_task_assignmet,'GA',0,0)
+    print(env.total_reward)
+    print(ga_task_assignmet)
+
     
-    rects1=plt.bar(x_index,ymax12,width=0.1,color='b',label='ga_max_time')
-    rects2=plt.bar(x_index+0.1,ymax22,width=0.1,color='r',label='aco_max_time')
-    rects3=plt.bar(x_index+0.2,ymax32,width=0.1,color='g',label='pso_max_time')
-    plt.xticks(x_index+0.1,x_index)
-    plt.legend()
-    plt.title('max_time_for_'+size+'_size')
-    plt.savefig('max_time_'+size+'.png')
-    plt.cla()
-    
-    rects1=plt.bar(x_index,ymean11,width=0.1,color='b',label='ga_mean_reward')
-    rects2=plt.bar(x_index+0.1,ymean21,width=0.1,color='r',label='aco_mean_reward')
-    rects3=plt.bar(x_index+0.2,ymean31,width=0.1,color='g',label='pso_mean_reward')
-    plt.xticks(x_index+0.1,x_index)
-    plt.legend()
-    plt.title('mean_reward_for_'+size+'_size')
-    plt.savefig('mean_reward_'+size+'.png')
-    plt.cla()
-    
-    rects1=plt.bar(x_index,ymean12,width=0.1,color='b',label='ga_mean_time')
-    rects2=plt.bar(x_index+0.1,ymean22,width=0.1,color='r',label='aco_mean_time')
-    rects3=plt.bar(x_index+0.2,ymean32,width=0.1,color='g',label='pso_mean_time')
-    plt.xticks(x_index+0.1,x_index)
-    plt.legend()
-    plt.title('mean_time_for_'+size+'_size')
-    plt.savefig('mean_time_'+size+'.png')
-    plt.cla()
-    
-    t_ga=[]
-    r_ga=[]
-    t_aco=[]
-    r_aco=[]
-    t_pso=[]
-    r_pso=[]
-    for i in range(10):
-        for j in range(10):
-            t_ga.append(re_ga[i][j][1])
-            r_ga.append(re_ga[i][j][0])
-            t_aco.append(re_aco[i][j][1])
-            r_aco.append(re_aco[i][j][0])
-            t_pso.append(re_pso[i][j][1])
-            r_pso.append(re_pso[i][j][0])
-    dataframe = pd.DataFrame({'ga_time':t_ga,'ga_reward':r_ga,'aco_time':t_aco,'aco_reward':r_aco,'pso_time':t_pso,'pso_reward':r_pso})
-    dataframe.to_csv(size+'_size_result.csv',sep=',')
     
     
 if __name__=='__main__':
     # small scale
-    evaluate(5,30,5e3)
-    # medium scale
-    evaluate(10,60,1e4)
-    # large scale
-    evaluate(15,90,1.5e4)
+    evaluate(10,60,5e3)
+    # # medium scale
+    # evaluate(10,60,1e4)
+    # # large scale
+    # evaluate(15,90,1.5e4)
