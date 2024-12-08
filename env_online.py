@@ -5,6 +5,7 @@ import pandas as pd
 import copy
 from multiprocess import Pool
 from om import OM
+import time
 
 class Env_online():
     def __init__(self, vehicle_num, target_num, map_size, task_appear_rate=0.5):
@@ -14,8 +15,8 @@ class Env_online():
         self.targets_num = target_num
         self.target_appear_rate = task_appear_rate # [0.5,0.75,1]
         self.map_size = map_size
-        #self.time_lim = 1e6
-        self.time_lim = self.map_size / 15 # speed range [10,15,20]
+        self.time_lim = 1000
+        # self.time_lim = self.map_size / 15 # speed range [10,15,20]
         self.time_left = self.time_lim
         self.total_reward = 0
         self.time = 0
@@ -24,6 +25,8 @@ class Env_online():
         self.algorithm = 'Online Matching'
         self.play = 0
         self.rond = 0
+        self.task_delay = np.zeros(target_num)
+        self.unsucess = []
         
     def task_generator(self, i):
         self.targets[i,0] = random.randint(1,self.map_size) - 0.5*self.map_size # x position
@@ -33,21 +36,31 @@ class Env_online():
         self.targets_value[i] = self.targets[i,2]
         
     def run(self):
-        om = OM(self.vehicle_num, self.time_lim/self.targets_num*self.vehicle_num, self.time_lim)
-        time_delay = np.zeros(self.targets_num)
+        print("Online matching start")
+        start_time = time.time()
+        om = OM(self.vehicle_num, self.time_lim)
+        time_window = np.floor(self.time_lim/self.targets_num)
+        # print("time left behind,", self.time_lim - self.targets_num*time_window)
+        # print("time window", time_window)
         for i in range(self.targets_num):
             self.task_generator(i)
-            reward, assignment, time_left = om.assignment(self.target_appear_rate, self.targets[i])
-            self.time_left = time_left
+            reward, assignment, time_delay, unsucees = om.assignment(self.target_appear_rate, self.targets[i], time_window)
+            self.time_left -= time_window
+            self.task_delay[i] = time_window *i + time_delay
             if assignment > -1:
                 self.total_reward += reward
                 self.assignment[assignment].append(i)
-            if self.time_left < 0:
-                break
-        print("time_left", self.time_left)
+            if unsucees:
+                self.unsucess.append(i)
+        self.vehicle_speed = om.vehicles_speed
+        end_time = time.time()
+        # print("time_delay", self.task_delay)
+        # print("time_left", self.time_left)
         print("assignment", self.assignment)
-        print('targets_value',self.targets_value)
+        # print('targets_value',self.targets_value)
         print("total rewards", self.total_reward)
+        # print("vehicals left time: ", om.vehicles_lefttime)
+        print("Online matching time", end_time-start_time)
 
             
     def reset(self):
@@ -77,5 +90,5 @@ class Env_online():
                 plt.plot(trajectory[:,0], trajectory[:,1]) 
             plt.savefig('task_pic/'+size+'/'+self.algorithm+ "-%d-%d.png" % (play,rond))
             plt.cla()
-    
+
         

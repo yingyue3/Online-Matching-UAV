@@ -27,7 +27,7 @@ def evaluate(vehicle_num, target_num, map_size):
     
 if __name__=='__main__':
     # small scale
-    evaluate(10,160,1e4)
+    evaluate(10,60,1e4)
     # # medium scale
     # evaluate(10,60,1e4)
     # # large scale

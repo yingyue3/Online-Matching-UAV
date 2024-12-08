@@ -32,4 +32,12 @@ if __name__=='__main__':
     # evaluate(10,60,1e4)
     # # large scale
     # evaluate(15,90,1.5e4)
-    pass
+    env_online = Env_online(10,60,1e4,task_appear_rate=0.5)
+    env_online.run()
+    env_offline = Env_offline(10,60,1e4)
+    env_offline.time_lim = env_online.time_lim
+    env_offline.task_inheritation(env_online.targets,env_online.vehicle_speed)
+    ga = GA(10,env_offline.vehicles_speed,env_offline.target_num,env_offline.targets,env_offline.time_lim)
+    ga_result = ga.run()
+    ga_task_assignmet = ga_result[0]
+    env_offline.run(ga_task_assignmet,'GA',0,0)

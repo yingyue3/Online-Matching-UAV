@@ -34,6 +34,7 @@ class Env_offline():
         self.end = False
         self.assignment = [[] for i in range(vehicle_num)]
         self.task_generator()
+        self.target_num = target_num
         
     def task_generator(self):
         for i in range(self.vehicles_speed.shape[0]):
@@ -49,12 +50,10 @@ class Env_offline():
                 self.distant_mat[i,j] = np.linalg.norm(self.targets[i,:2]-self.targets[j,:2])
         self.targets_value = copy.deepcopy((self.targets[:,2]))
     
-    def task_inheritation(self, targets, time_delay, vehicles_speed):
+    def task_inheritation(self, targets, vehicles_speed):
         self.vehicles_speed = vehicles_speed
         for i in range(self.targets.shape[0]-1):
             self.targets[i+1] = targets[i]
-            self.targets[i+1,3] += time_delay[i]
-
         for i in range(self.targets.shape[0]):
             for j in range(self.targets.shape[0]):
                 self.distant_mat[i,j] = np.linalg.norm(self.targets[i,:2]-self.targets[j,:2])
@@ -85,11 +84,14 @@ class Env_offline():
             self.end = True
         
     def run(self, assignment, algorithm, play, rond):
+        print("Offline")
         self.assignment = assignment
         self.algorithm = algorithm
         self.play = play
         self.rond = rond
         self.get_total_reward()
+        print("assignment: ", self.assignment)
+        print("total rewards: ", self.total_reward)
         if self.visualized:
             self.visualize()        
             

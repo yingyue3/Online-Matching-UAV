@@ -122,7 +122,7 @@ class GA():
         self.tmp_ff[self.pop_size:self.tmp_size] = np.array(new_ff)
 
     def run(self):
-        print("GA start, pid: %s" % os.getpid())
+        # print("GA start, pid: %s" % os.getpid())
         start_time = time.time()
         cut = 0
         count = 0
@@ -169,7 +169,6 @@ class GA():
                     reward += self.targets[seq[post], 2]
                 pre = seq[post]
                 post += 1
-        print("GA result:", task_assignment)
         end_time = time.time()
         print("GA time:", end_time - start_time)
         return task_assignment, end_time - start_time
