@@ -170,6 +170,6 @@ class GA():
                 pre = seq[post]
                 post += 1
         end_time = time.time()
-        print("GA time:", end_time - start_time)
+        # print("GA time:", end_time - start_time)
         return task_assignment, end_time - start_time
 

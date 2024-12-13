@@ -349,7 +349,7 @@ class PSO():
     # ---------------------Main----------------------------------------
 
     def run(self):
-        print("PSO start, pid: %s" % os.getpid())
+        # print("PSO start, pid: %s" % os.getpid())
         start_time = time.time()
         self.fun_get_initial_parameter()
         self.init_Population()
@@ -357,8 +357,8 @@ class PSO():
         end_time = time.time()
         #self.cal_time  = end_time - start_time
         #self.task_assignment = self.uav_best
-        print("PSO result:", self.uav_best)
-        print("PSO time:", end_time - start_time)
+        # print("PSO result:", self.uav_best)
+        # print("PSO time:", end_time - start_time)
         return self.uav_best, end_time - start_time
         
 

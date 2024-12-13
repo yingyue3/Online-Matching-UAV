@@ -33,6 +33,7 @@ class Env_offline():
         self.repeat_cost = repeat_cost
         self.end = False
         self.assignment = [[] for i in range(vehicle_num)]
+        self.vehicles_success_rate = np.zeros(vehicle_num)
         self.task_generator()
         self.target_num = target_num
         
@@ -40,6 +41,7 @@ class Env_offline():
         for i in range(self.vehicles_speed.shape[0]):
             choose = random.randint(0,2)
             self.vehicles_speed[i] = self.speed_range[choose]
+            self.vehicles_success_rate[i] = 0.9 + np.random.rand()/10
         for i in range(self.targets.shape[0]-1):
             self.targets[i+1,0] = random.randint(1,self.map_size) - 0.5*self.map_size # x position
             self.targets[i+1,1] = random.randint(1,self.map_size) - 0.5*self.map_size # y position
@@ -84,16 +86,16 @@ class Env_offline():
             self.end = True
         
     def run(self, assignment, algorithm, play, rond):
-        print("Offline")
+        # print("Offline")
         self.assignment = assignment
         self.algorithm = algorithm
         self.play = play
         self.rond = rond
         self.get_total_reward()
-        print("assignment: ", self.assignment)
-        print("total rewards: ", self.total_reward)
-        if self.visualized:
-            self.visualize()        
+        # print("assignment: ", self.assignment)
+        # print("total rewards: ", self.total_reward)
+        # if self.visualized:
+        #     self.visualize()        
             
     def reset(self):
         self.vehicles_position = np.zeros(self.vehicles_position.shape[0],dtype=np.int32)
@@ -108,7 +110,9 @@ class Env_offline():
             speed = self.vehicles_speed[i]
             for j in range(len(self.assignment[i])):
                 position = self.targets[self.assignment[i][j],:4]
-                self.total_reward = self.total_reward + position[2]
+                success_check = np.random.rand()
+                if success_check < self.vehicles_success_rate[i]:
+                    self.total_reward = self.total_reward + position[2]
                 if j == 0:
                     self.vehicles_lefttime[i] = self.vehicles_lefttime[i] - np.linalg.norm(position[:2]) / speed - position[3]
                 else:

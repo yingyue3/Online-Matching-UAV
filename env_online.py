@@ -15,8 +15,8 @@ class Env_online():
         self.targets_num = target_num
         self.target_appear_rate = task_appear_rate # [0.5,0.75,1]
         self.map_size = map_size
-        self.time_lim = 1000
-        # self.time_lim = self.map_size / 15 # speed range [10,15,20]
+        # self.time_lim = 1000
+        self.time_lim = self.map_size / 15 # speed range [10,15,20]
         self.time_left = self.time_lim
         self.total_reward = 0
         self.time = 0
@@ -56,11 +56,12 @@ class Env_online():
         end_time = time.time()
         # print("time_delay", self.task_delay)
         # print("time_left", self.time_left)
-        print("assignment", self.assignment)
-        # print('targets_value',self.targets_value)
-        print("total rewards", self.total_reward)
-        # print("vehicals left time: ", om.vehicles_lefttime)
-        print("Online matching time", end_time-start_time)
+        # print("assignment", self.assignment)
+        # # print('targets_value',self.targets_value)
+        # print("total rewards", self.total_reward)
+        # # print("vehicals left time: ", om.vehicles_lefttime)
+        # print("Online matching time", end_time-start_time)
+        return self.total_reward, end_time-start_time
 
             
     def reset(self):
